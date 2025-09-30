@@ -1,0 +1,4 @@
+# Chzzk Channel Configuration
+# 치지직 채널 ID를 입력하세요
+# 예: https://chzzk.naver.com/live/YOUR_CHANNEL_ID
+chzzk.channel.id=YOUR_CHANNEL_ID_HERE
