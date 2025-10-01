@@ -3,6 +3,8 @@ package com.foririon.project.controller;
 import com.foririon.project.service.StreamService;
 import com.foririon.project.vo.LiveStatusContentVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,8 +17,11 @@ public class StreamController {
   private StreamService testService;
 
   @GetMapping("/live-status")
-  public LiveStatusContentVO liveStatus() {
-    return testService.getLiveStatus();
+  public ResponseEntity<LiveStatusContentVO> liveStatus() {
+    return ResponseEntity.ok()
+        .cacheControl(CacheControl.noCache().noStore())
+        .header("Pragma", "no-cache")
+        .body(testService.getLiveStatus());
   }
 
   @GetMapping("/is-live")

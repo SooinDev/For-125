@@ -21,6 +21,21 @@ logs/
 .env
 .env.*
 
+# API 키 및 인증 정보
+*.key
+*.pem
+*.p12
+*.jks
+*.keystore
+secrets.properties
+api-keys.properties
+credentials.json
+
+# OAuth 및 토큰
+**/oauth2/
+**/tokens/
+*.token
+
 ### IntelliJ IDEA ###
 .idea/
 .idea/modules.xml
