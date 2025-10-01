@@ -99,6 +99,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool _isLive = false;
   String? _channelId;
   int? _concurrentUserCount;
+  int _imageRefreshKey = 0;
   List<HotClip> _hotClips = [];
   bool _isLoadingClips = false;
   bool _showAllClips = false;
@@ -306,6 +307,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           _isLive = (status == 'OPEN' || status == 'LIVE');
           _channelId = channelId;
           _concurrentUserCount = concurrentUserCount;
+          _imageRefreshKey = DateTime.now().millisecondsSinceEpoch;
 
           // liveImageUrl의 {type} 템플릿을 실제 해상도로 교체
           if (liveImageUrl != null && liveImageUrl.contains('{type}')) {
@@ -493,7 +495,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   gradient: LinearGradient(
                                     colors: [
                                       AppTheme.sakuraPink,
-                                      AppTheme.sakuraPink.withValues(alpha: 0.7),
+                                      AppTheme.sakuraPink
+                                          .withValues(alpha: 0.7),
                                     ],
                                   ),
                                   boxShadow: [
@@ -513,8 +516,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 _statusMessage,
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   color: _isLive
-                                      ? (isDark ? Colors.white : AppTheme.deepIce)
-                                      : (isDark ? Colors.white : AppTheme.deepIce),
+                                      ? (isDark
+                                          ? Colors.white
+                                          : AppTheme.deepIce)
+                                      : (isDark
+                                          ? Colors.white
+                                          : AppTheme.deepIce),
                                   fontWeight: FontWeight.w600,
                                   fontSize: 15,
                                   letterSpacing: 0.3,
@@ -535,7 +542,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   gradient: LinearGradient(
                                     colors: [
                                       AppTheme.sakuraPink,
-                                      AppTheme.sakuraPink.withValues(alpha: 0.7),
+                                      AppTheme.sakuraPink
+                                          .withValues(alpha: 0.7),
                                     ],
                                   ),
                                   boxShadow: [
@@ -565,7 +573,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       animation: _breathingAnimation,
                       builder: (context, child) {
                         return Transform.scale(
-                          scale: 1.0 + ((_breathingAnimation.value - 1.0) * 0.15),
+                          scale:
+                              1.0 + ((_breathingAnimation.value - 1.0) * 0.15),
                           child: GestureDetector(
                             onTap: () {
                               HapticFeedback.mediumImpact();
@@ -586,14 +595,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 border: Border.all(
                                   color: isDark
                                       ? Colors.white.withValues(alpha: 0.2)
-                                      : AppTheme.sakuraPink.withValues(alpha: 0.3),
+                                      : AppTheme.sakuraPink
+                                          .withValues(alpha: 0.3),
                                   width: 2,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
                                     color: AppTheme.sakuraPink.withValues(
-                                        alpha:
-                                            0.25 * (_breathingAnimation.value - 0.92)),
+                                        alpha: 0.25 *
+                                            (_breathingAnimation.value - 0.92)),
                                     blurRadius: 32,
                                     offset: const Offset(0, 12),
                                     spreadRadius: 0,
@@ -606,272 +616,319 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   ),
                                 ],
                               ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Stack(
-                            children: [
-                              Image.network(
-                                _liveImageUrl!,
-                                fit: BoxFit.cover,
-                                loadingBuilder:
-                                    (context, child, loadingProgress) {
-                                  if (loadingProgress == null) return child;
-                                  return Container(
-                                    height: 200,
-                                    alignment: Alignment.center,
-                                    child: CircularProgressIndicator(
-                                      value:
-                                          loadingProgress.expectedTotalBytes !=
-                                                  null
-                                              ? loadingProgress
-                                                      .cumulativeBytesLoaded /
-                                                  loadingProgress
-                                                      .expectedTotalBytes!
-                                              : null,
-                                      color: AppTheme.sakuraPink,
-                                    ),
-                                  );
-                                },
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    height: 200,
-                                    alignment: Alignment.center,
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.error_outline_rounded,
-                                          color: isDark
-                                              ? Colors.white
-                                                  .withValues(alpha: 0.5)
-                                              : AppTheme.textSecondary,
-                                          size: 48,
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Text(
-                                          '이미지를 불러올 수 없습니다',
-                                          style: theme.textTheme.bodyMedium
-                                              ?.copyWith(
-                                            color: isDark
-                                                ? Colors.white
-                                                    .withValues(alpha: 0.7)
-                                                : AppTheme.textSecondary,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: Stack(
+                                  children: [
+                                    Image.network(
+                                      '${_liveImageUrl!}?refresh=$_imageRefreshKey',
+                                      fit: BoxFit.cover,
+                                      loadingBuilder:
+                                          (context, child, loadingProgress) {
+                                        if (loadingProgress == null)
+                                          return child;
+                                        return Container(
+                                          height: 200,
+                                          alignment: Alignment.center,
+                                          child: CircularProgressIndicator(
+                                            value: loadingProgress
+                                                        .expectedTotalBytes !=
+                                                    null
+                                                ? loadingProgress
+                                                        .cumulativeBytesLoaded /
+                                                    loadingProgress
+                                                        .expectedTotalBytes!
+                                                : null,
+                                            color: AppTheme.sakuraPink,
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-
-                              // LIVE 뱃지 (좌측 상단)
-                              Positioned(
-                                left: 16,
-                                top: 16,
-                                child: AnimatedBuilder(
-                                  animation: _glowAnimation,
-                                  builder: (context, child) {
-                                    return ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: BackdropFilter(
-                                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 12, vertical: 8),
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                              colors: [
-                                                Colors.black.withValues(alpha: 0.7),
-                                                Colors.black.withValues(alpha: 0.5),
-                                              ],
-                                            ),
-                                            borderRadius: BorderRadius.circular(12),
-                                            border: Border.all(
-                                              color: Colors.white.withValues(alpha: 0.2),
-                                              width: 1,
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: AppTheme.sakuraPink.withValues(
-                                                    alpha: 0.3 * _glowAnimation.value),
-                                                blurRadius: 16,
-                                                spreadRadius: 0,
+                                        );
+                                      },
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return Container(
+                                          height: 200,
+                                          alignment: Alignment.center,
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.error_outline_rounded,
+                                                color: isDark
+                                                    ? Colors.white
+                                                        .withValues(alpha: 0.5)
+                                                    : AppTheme.textSecondary,
+                                                size: 48,
+                                              ),
+                                              const SizedBox(height: 12),
+                                              Text(
+                                                '이미지를 불러올 수 없습니다',
+                                                style: theme
+                                                    .textTheme.bodyMedium
+                                                    ?.copyWith(
+                                                  color: isDark
+                                                      ? Colors.white.withValues(
+                                                          alpha: 0.7)
+                                                      : AppTheme.textSecondary,
+                                                ),
                                               ),
                                             ],
                                           ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Container(
-                                                width: 8,
-                                                height: 8,
+                                        );
+                                      },
+                                    ),
+
+                                    // LIVE 뱃지 (좌측 상단)
+                                    Positioned(
+                                      left: 16,
+                                      top: 16,
+                                      child: AnimatedBuilder(
+                                        animation: _glowAnimation,
+                                        builder: (context, child) {
+                                          return ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            child: BackdropFilter(
+                                              filter: ImageFilter.blur(
+                                                  sigmaX: 10, sigmaY: 10),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 8),
                                                 decoration: BoxDecoration(
                                                   gradient: LinearGradient(
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
                                                     colors: [
-                                                      AppTheme.sakuraPink,
-                                                      AppTheme.sakuraPink
-                                                          .withValues(alpha: 0.8),
+                                                      Colors.black.withValues(
+                                                          alpha: 0.7),
+                                                      Colors.black.withValues(
+                                                          alpha: 0.5),
                                                     ],
                                                   ),
-                                                  shape: BoxShape.circle,
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  border: Border.all(
+                                                    color: Colors.white
+                                                        .withValues(alpha: 0.2),
+                                                    width: 1,
+                                                  ),
                                                   boxShadow: [
                                                     BoxShadow(
                                                       color: AppTheme.sakuraPink
                                                           .withValues(
-                                                              alpha: 0.6 *
-                                                                  _glowAnimation.value),
-                                                      blurRadius: 8,
-                                                      spreadRadius: 1,
+                                                              alpha: 0.3 *
+                                                                  _glowAnimation
+                                                                      .value),
+                                                      blurRadius: 16,
+                                                      spreadRadius: 0,
                                                     ),
                                                   ],
                                                 ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                'LIVE',
-                                                style:
-                                                    theme.textTheme.bodySmall?.copyWith(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 13,
-                                                  letterSpacing: 0.8,
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Container(
+                                                      width: 8,
+                                                      height: 8,
+                                                      decoration: BoxDecoration(
+                                                        gradient:
+                                                            LinearGradient(
+                                                          colors: [
+                                                            AppTheme.sakuraPink,
+                                                            AppTheme.sakuraPink
+                                                                .withValues(
+                                                                    alpha: 0.8),
+                                                          ],
+                                                        ),
+                                                        shape: BoxShape.circle,
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                            color: AppTheme
+                                                                .sakuraPink
+                                                                .withValues(
+                                                                    alpha: 0.6 *
+                                                                        _glowAnimation
+                                                                            .value),
+                                                            blurRadius: 8,
+                                                            spreadRadius: 1,
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Text(
+                                                      'LIVE',
+                                                      style: theme
+                                                          .textTheme.bodySmall
+                                                          ?.copyWith(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        fontSize: 13,
+                                                        letterSpacing: 0.8,
+                                                      ),
+                                                    ),
+                                                    if (_concurrentUserCount !=
+                                                        null) ...[
+                                                      const SizedBox(width: 12),
+                                                      Container(
+                                                        width: 1,
+                                                        height: 14,
+                                                        color: Colors.white
+                                                            .withValues(
+                                                                alpha: 0.3),
+                                                      ),
+                                                      const SizedBox(width: 12),
+                                                      Icon(
+                                                        Icons
+                                                            .visibility_rounded,
+                                                        color: Colors.white
+                                                            .withValues(
+                                                                alpha: 0.9),
+                                                        size: 16,
+                                                      ),
+                                                      const SizedBox(width: 6),
+                                                      Text(
+                                                        '${_concurrentUserCount}',
+                                                        style: theme
+                                                            .textTheme.bodySmall
+                                                            ?.copyWith(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          fontSize: 13,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ],
                                                 ),
                                               ),
-                                              if (_concurrentUserCount != null) ...[
-                                                const SizedBox(width: 12),
-                                                Container(
-                                                  width: 1,
-                                                  height: 14,
-                                                  color:
-                                                      Colors.white.withValues(alpha: 0.3),
-                                                ),
-                                                const SizedBox(width: 12),
-                                                Icon(
-                                                  Icons.visibility_rounded,
-                                                  color: Colors.white
-                                                      .withValues(alpha: 0.9),
-                                                  size: 16,
-                                                ),
-                                                const SizedBox(width: 6),
-                                                Text(
-                                                  '${_concurrentUserCount}',
-                                                  style:
-                                                      theme.textTheme.bodySmall?.copyWith(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.w600,
-                                                    fontSize: 13,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+
+                                    // 클릭 유도 오버레이 (우측 하단)
+                                    Positioned(
+                                      right: 16,
+                                      bottom: 16,
+                                      child: AnimatedBuilder(
+                                        animation: _breathingAnimation,
+                                        builder: (context, child) {
+                                          return Transform.scale(
+                                            scale: 1.0 +
+                                                ((_breathingAnimation.value -
+                                                        1.0) *
+                                                    0.4),
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              child: BackdropFilter(
+                                                filter: ImageFilter.blur(
+                                                    sigmaX: 10, sigmaY: 10),
+                                                child: Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 16,
+                                                      vertical: 10),
+                                                  decoration: BoxDecoration(
+                                                    gradient: LinearGradient(
+                                                      begin: Alignment.topLeft,
+                                                      end:
+                                                          Alignment.bottomRight,
+                                                      colors: [
+                                                        AppTheme.sakuraPink
+                                                            .withValues(
+                                                                alpha: 0.9),
+                                                        AppTheme.sakuraPink
+                                                            .withValues(
+                                                                alpha: 0.7),
+                                                      ],
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            16),
+                                                    border: Border.all(
+                                                      color: Colors.white
+                                                          .withValues(
+                                                              alpha: 0.3),
+                                                      width: 1.5,
+                                                    ),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: AppTheme
+                                                            .sakuraPink
+                                                            .withValues(
+                                                                alpha: 0.4 *
+                                                                    _breathingAnimation
+                                                                        .value),
+                                                        blurRadius: 20,
+                                                        offset:
+                                                            const Offset(0, 6),
+                                                        spreadRadius: 0,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        Icons
+                                                            .play_arrow_rounded,
+                                                        color: Colors.white,
+                                                        size: 20,
+                                                      ),
+                                                      const SizedBox(width: 6),
+                                                      Text(
+                                                        '방송 보러가기',
+                                                        style: theme
+                                                            .textTheme.bodySmall
+                                                            ?.copyWith(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                          fontSize: 14,
+                                                          letterSpacing: -0.3,
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
-                                              ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+
+                                    // 전체 화면 그라데이션 오버레이 (하단)
+                                    Positioned(
+                                      left: 0,
+                                      right: 0,
+                                      bottom: 0,
+                                      height: 100,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Colors.transparent,
+                                              Colors.black
+                                                  .withValues(alpha: 0.3),
                                             ],
                                           ),
                                         ),
                                       ),
-                                    );
-                                  },
-                                ),
-                              ),
-
-                              // 클릭 유도 오버레이 (우측 하단)
-                              Positioned(
-                                right: 16,
-                                bottom: 16,
-                                child: AnimatedBuilder(
-                                  animation: _breathingAnimation,
-                                  builder: (context, child) {
-                                    return Transform.scale(
-                                      scale: 1.0 +
-                                          ((_breathingAnimation.value - 1.0) * 0.4),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(16),
-                                        child: BackdropFilter(
-                                          filter:
-                                              ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 16, vertical: 10),
-                                            decoration: BoxDecoration(
-                                              gradient: LinearGradient(
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
-                                                colors: [
-                                                  AppTheme.sakuraPink
-                                                      .withValues(alpha: 0.9),
-                                                  AppTheme.sakuraPink
-                                                      .withValues(alpha: 0.7),
-                                                ],
-                                              ),
-                                              borderRadius: BorderRadius.circular(16),
-                                              border: Border.all(
-                                                color:
-                                                    Colors.white.withValues(alpha: 0.3),
-                                                width: 1.5,
-                                              ),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: AppTheme.sakuraPink.withValues(
-                                                      alpha: 0.4 *
-                                                          _breathingAnimation.value),
-                                                  blurRadius: 20,
-                                                  offset: const Offset(0, 6),
-                                                  spreadRadius: 0,
-                                                ),
-                                              ],
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(
-                                                  Icons.play_arrow_rounded,
-                                                  color: Colors.white,
-                                                  size: 20,
-                                                ),
-                                                const SizedBox(width: 6),
-                                                Text(
-                                                  '방송 보러가기',
-                                                  style: theme.textTheme.bodySmall
-                                                      ?.copyWith(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.w700,
-                                                    fontSize: 14,
-                                                    letterSpacing: -0.3,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-
-                              // 전체 화면 그라데이션 오버레이 (하단)
-                              Positioned(
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                height: 100,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Colors.transparent,
-                                        Colors.black.withValues(alpha: 0.3),
-                                      ],
                                     ),
-                                  ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
                             ),
                           ),
                         );
@@ -916,13 +973,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   end: Alignment.bottomRight,
                                   colors: isDark
                                       ? [
-                                          AppTheme.deepIce.withValues(alpha: 0.15),
-                                          AppTheme.iceBlue.withValues(alpha: 0.08),
-                                          AppTheme.deepIce.withValues(alpha: 0.15),
+                                          AppTheme.deepIce
+                                              .withValues(alpha: 0.15),
+                                          AppTheme.iceBlue
+                                              .withValues(alpha: 0.08),
+                                          AppTheme.deepIce
+                                              .withValues(alpha: 0.15),
                                         ]
                                       : [
                                           Colors.white.withValues(alpha: 0.9),
-                                          AppTheme.iceBlue.withValues(alpha: 0.15),
+                                          AppTheme.iceBlue
+                                              .withValues(alpha: 0.15),
                                           Colors.white.withValues(alpha: 0.9),
                                         ],
                                 ),
@@ -932,7 +993,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   // 배경 패턴
                                   Positioned.fill(
                                     child: CustomPaint(
-                                      painter: _WinterPatternPainter(isDark: isDark),
+                                      painter:
+                                          _WinterPatternPainter(isDark: isDark),
                                     ),
                                   ),
                                   // 떠다니는 눈송이들
@@ -942,7 +1004,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       animation: _floatingAnimation,
                                       builder: (context, child) {
                                         final position =
-                                            (_floatingAnimation.value + offset * 100) %
+                                            (_floatingAnimation.value +
+                                                    offset * 100) %
                                                 120;
                                         return Positioned(
                                           left: (index * 40.0) % 380,
@@ -971,128 +1034,136 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   ),
                                   // 중앙 컨텐츠
                                   Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // 이리온 아이콘
-                                    AnimatedBuilder(
-                                      animation: _breathingAnimation,
-                                      builder: (context, child) {
-                                        return Transform.scale(
-                                          scale: 0.95 +
-                                              (_breathingAnimation.value -
-                                                      1.0) *
-                                                  0.5,
-                                          child: Container(
-                                            width: 100,
-                                            height: 100,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              gradient: LinearGradient(
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
-                                                colors: [
-                                                  AppTheme.sakuraPink
-                                                      .withValues(alpha: 0.3),
-                                                  AppTheme.iceBlue
-                                                      .withValues(alpha: 0.3),
-                                                ],
-                                              ),
-                                              border: Border.all(
-                                                color: isDark
-                                                    ? Colors.white
-                                                        .withValues(alpha: 0.3)
-                                                    : AppTheme.crystalBlue
-                                                        .withValues(alpha: 0.5),
-                                                width: 2.5,
-                                              ),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: AppTheme.sakuraPink
-                                                      .withValues(alpha: 0.3),
-                                                  blurRadius: 20 *
-                                                      _breathingAnimation.value,
-                                                  spreadRadius: 5,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // 이리온 아이콘
+                                        AnimatedBuilder(
+                                          animation: _breathingAnimation,
+                                          builder: (context, child) {
+                                            return Transform.scale(
+                                              scale: 0.95 +
+                                                  (_breathingAnimation.value -
+                                                          1.0) *
+                                                      0.5,
+                                              child: Container(
+                                                width: 100,
+                                                height: 100,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  gradient: LinearGradient(
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
+                                                    colors: [
+                                                      AppTheme.sakuraPink
+                                                          .withValues(
+                                                              alpha: 0.3),
+                                                      AppTheme.iceBlue
+                                                          .withValues(
+                                                              alpha: 0.3),
+                                                    ],
+                                                  ),
+                                                  border: Border.all(
+                                                    color: isDark
+                                                        ? Colors.white
+                                                            .withValues(
+                                                                alpha: 0.3)
+                                                        : AppTheme.crystalBlue
+                                                            .withValues(
+                                                                alpha: 0.5),
+                                                    width: 2.5,
+                                                  ),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: AppTheme.sakuraPink
+                                                          .withValues(
+                                                              alpha: 0.3),
+                                                      blurRadius: 20 *
+                                                          _breathingAnimation
+                                                              .value,
+                                                      spreadRadius: 5,
+                                                    ),
+                                                  ],
                                                 ),
+                                                child: Center(
+                                                  child: Text(
+                                                    '❄️',
+                                                    style:
+                                                        TextStyle(fontSize: 50),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        const SizedBox(height: 32),
+                                        // 메인 메시지
+                                        Text(
+                                          '이리온이 곧 돌아옵니다',
+                                          style: theme.textTheme.headlineMedium
+                                              ?.copyWith(
+                                            color: isDark
+                                                ? Colors.white
+                                                : AppTheme.deepIce,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 26,
+                                            letterSpacing: -0.5,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        // 서브 메시지
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 8),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                AppTheme.sakuraPink
+                                                    .withValues(alpha: 0.15),
+                                                AppTheme.petalPink
+                                                    .withValues(alpha: 0.08),
                                               ],
                                             ),
-                                            child: Center(
-                                              child: Text(
-                                                '❄️',
-                                                style: TextStyle(fontSize: 50),
-                                              ),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                            border: Border.all(
+                                              color: AppTheme.sakuraPink
+                                                  .withValues(alpha: 0.25),
+                                              width: 1,
                                             ),
                                           ),
-                                        );
-                                      },
-                                    ),
-                                    const SizedBox(height: 32),
-                                    // 메인 메시지
-                                    Text(
-                                      '이리온이 곧 돌아옵니다',
-                                      style: theme.textTheme.headlineMedium
-                                          ?.copyWith(
-                                        color: isDark
-                                            ? Colors.white
-                                            : AppTheme.deepIce,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 26,
-                                        letterSpacing: -0.5,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    // 서브 메시지
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            AppTheme.sakuraPink
-                                                .withValues(alpha: 0.15),
-                                            AppTheme.petalPink
-                                                .withValues(alpha: 0.08),
-                                          ],
+                                          child: Text(
+                                            '다음 방송을 기다려주세요 ❄️',
+                                            style: theme.textTheme.bodyMedium
+                                                ?.copyWith(
+                                              color: isDark
+                                                  ? AppTheme.sakuraPink
+                                                      .withValues(alpha: 0.9)
+                                                  : AppTheme.sakuraPink,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                              letterSpacing: -0.2,
+                                            ),
+                                          ),
                                         ),
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: AppTheme.sakuraPink
-                                              .withValues(alpha: 0.25),
-                                          width: 1,
+                                        const SizedBox(height: 20),
+                                        // 일정 안내
+                                        Text(
+                                          '방송 일정은 일정 탭에서 확인하세요',
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: isDark
+                                                ? Colors.white
+                                                    .withValues(alpha: 0.5)
+                                                : AppTheme.textSecondary
+                                                    .withValues(alpha: 0.7),
+                                            fontSize: 13,
+                                            letterSpacing: -0.1,
+                                          ),
                                         ),
-                                      ),
-                                      child: Text(
-                                        '다음 방송을 기다려주세요 ❄️',
-                                        style: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                          color: isDark
-                                              ? AppTheme.sakuraPink
-                                                  .withValues(alpha: 0.9)
-                                              : AppTheme.sakuraPink,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14,
-                                          letterSpacing: -0.2,
-                                        ),
-                                      ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 20),
-                                    // 일정 안내
-                                    Text(
-                                      '방송 일정은 일정 탭에서 확인하세요',
-                                      style:
-                                          theme.textTheme.bodySmall?.copyWith(
-                                        color: isDark
-                                            ? Colors.white
-                                                .withValues(alpha: 0.5)
-                                            : AppTheme.textSecondary
-                                                .withValues(alpha: 0.7),
-                                        fontSize: 13,
-                                        letterSpacing: -0.1,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -1169,8 +1240,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 children: [
                                   Text(
                                     '최근 30일 다시보기',
-                                    style:
-                                        theme.textTheme.titleLarge?.copyWith(
+                                    style: theme.textTheme.titleLarge?.copyWith(
                                       color: isDark
                                           ? Colors.white
                                           : AppTheme.deepIce,
@@ -1182,11 +1252,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   const SizedBox(height: 4),
                                   Text(
                                     '최신 방송 다시보기',
-                                    style:
-                                        theme.textTheme.bodySmall?.copyWith(
+                                    style: theme.textTheme.bodySmall?.copyWith(
                                       color: isDark
-                                          ? Colors.white
-                                              .withValues(alpha: 0.6)
+                                          ? Colors.white.withValues(alpha: 0.6)
                                           : AppTheme.textSecondary,
                                       fontSize: 13,
                                     ),
@@ -1410,7 +1478,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  Widget _buildHotClipGridCard(BuildContext context, HotClip clip, bool isDark) {
+  Widget _buildHotClipGridCard(
+      BuildContext context, HotClip clip, bool isDark) {
     final hasThumbnail = clip.thumbnailUrl.isNotEmpty;
 
     return GestureDetector(

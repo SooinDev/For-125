@@ -5,10 +5,27 @@
 *.swp
 .DS_Store
 .atom/
+.build/
 .buildlog/
 .history
 .svn/
+.swiftpm/
 migrate_working_dir/
+
+# Sensitive Information
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.jks
+*.keystore
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+secrets.dart
+api_keys.dart
+config.properties
 
 # IntelliJ related
 *.iml
