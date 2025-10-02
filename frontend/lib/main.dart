@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:ui';
 import 'dart:math' as math;
+import 'dart:async';
 import 'schedule_page.dart';
 import 'main_wrapper.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -14,8 +15,8 @@ import 'theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'widgets/premium_app_bar.dart';
 
-// 핫클립 모델
-class HotClip {
+// 다시보기 모델
+class Replay {
   final String clipId;
   final String title;
   final String thumbnailUrl;
@@ -23,7 +24,7 @@ class HotClip {
   final int viewCount;
   final DateTime createdAt;
 
-  HotClip({
+  Replay({
     required this.clipId,
     required this.title,
     required this.thumbnailUrl,
@@ -32,7 +33,7 @@ class HotClip {
     required this.createdAt,
   });
 
-  factory HotClip.fromJson(Map<String, dynamic> json) {
+  factory Replay.fromJson(Map<String, dynamic> json) {
     DateTime parseCreatedAt() {
       if (json['createdAt'] == null) return DateTime.now();
 
@@ -51,7 +52,7 @@ class HotClip {
       }
     }
 
-    return HotClip(
+    return Replay(
       clipId: json['clipId'] ?? '',
       title: json['title'] ?? '제목 없음',
       thumbnailUrl: json['thumbnailUrl'] ?? '',
@@ -100,9 +101,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   String? _channelId;
   int? _concurrentUserCount;
   int _imageRefreshKey = 0;
-  List<HotClip> _hotClips = [];
-  bool _isLoadingClips = false;
-  bool _showAllClips = false;
+  List<Replay> _replays = [];
+  bool _isLoadingReplays = false;
+  bool _showAllReplays = false;
   late AnimationController _statusAnimationController;
   late AnimationController _cardAnimationController;
   late AnimationController _backgroundAnimationController;
@@ -116,6 +117,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late Animation<double> _floatingAnimation;
   late Animation<double> _glowAnimation;
   late Animation<Offset> _slideAnimation;
+  Timer? _statusCheckTimer;
 
   @override
   void initState() {
@@ -219,51 +221,57 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _glowAnimationController.repeat(reverse: true);
 
     _checkServerConnection();
-    _fetchHotClips();
+    _fetchReplays();
+
+    // 1분마다 방송 상태만 확인
+    _statusCheckTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      _checkServerConnection();
+    });
   }
 
-  Future<void> _fetchHotClips() async {
+  Future<void> _fetchReplays() async {
     setState(() {
-      _isLoadingClips = true;
+      _isLoadingReplays = true;
     });
 
     try {
       final apiUrl = '${AppConfig.baseUrl}/api/stream/hot-clips';
-      print('[INFO] 핫클립 조회 시도: $apiUrl');
+      print('[INFO] 다시보기 조회 시도: $apiUrl');
 
       final response = await http.get(
         Uri.parse(apiUrl),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 10));
 
-      print('[INFO] 핫클립 응답 코드: ${response.statusCode}');
+      print('[INFO] 다시보기 응답 코드: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final decodedResponse = utf8.decode(response.bodyBytes);
         final List<dynamic> data = jsonDecode(decodedResponse);
 
         setState(() {
-          _hotClips = data.map((json) => HotClip.fromJson(json)).toList();
-          _isLoadingClips = false;
+          _replays = data.map((json) => Replay.fromJson(json)).toList();
+          _isLoadingReplays = false;
         });
 
-        print('[SUCCESS] 핫클립 ${_hotClips.length}개 로드 완료');
+        print('[SUCCESS] 다시보기 ${_replays.length}개 로드 완료');
       } else {
         setState(() {
-          _isLoadingClips = false;
+          _isLoadingReplays = false;
         });
-        print('[ERROR] 핫클립 조회 실패: ${response.statusCode}');
+        print('[ERROR] 다시보기 조회 실패: ${response.statusCode}');
       }
     } catch (e) {
       setState(() {
-        _isLoadingClips = false;
+        _isLoadingReplays = false;
       });
-      print('[ERROR] 핫클립 조회 실패: $e');
+      print('[ERROR] 다시보기 조회 실패: $e');
     }
   }
 
   @override
   void dispose() {
+    _statusCheckTimer?.cancel();
     _statusAnimationController.dispose();
     _cardAnimationController.dispose();
     _backgroundAnimationController.dispose();
@@ -1195,7 +1203,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                   const SizedBox(height: 40),
 
-                  // 핫클립 섹션 헤더
+                  // 다시보기 섹션 헤더
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
@@ -1269,8 +1277,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                   const SizedBox(height: 24),
 
-                  // 핫클립 그리드
-                  _hotClips.isEmpty
+                  // 다시보기 그리드
+                  _replays.isEmpty
                       ? Container(
                           margin: const EdgeInsets.symmetric(horizontal: 20),
                           padding: const EdgeInsets.all(48),
@@ -1287,7 +1295,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               ),
                               const SizedBox(height: 20),
                               Text(
-                                '핫클립 준비 중',
+                                '다시보기 준비 중',
                                 style: theme.textTheme.bodyLarge?.copyWith(
                                   color: isDark
                                       ? Colors.white.withValues(alpha: 0.6)
@@ -1324,18 +1332,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   crossAxisSpacing: 14,
                                   mainAxisSpacing: 14,
                                 ),
-                                itemCount: _showAllClips
-                                    ? _hotClips.length
-                                    : (_hotClips.length > 6
+                                itemCount: _showAllReplays
+                                    ? _replays.length
+                                    : (_replays.length > 6
                                         ? 6
-                                        : _hotClips.length),
+                                        : _replays.length),
                                 itemBuilder: (context, index) {
-                                  final clip = _hotClips[index];
-                                  return _buildHotClipGridCard(
-                                      context, clip, isDark);
+                                  final replay = _replays[index];
+                                  return _buildReplayGridCard(
+                                      context, replay, isDark);
                                 },
                               ),
-                              if (_hotClips.length > 6 && !_showAllClips) ...[
+                              if (_replays.length > 6 && !_showAllReplays) ...[
                                 const SizedBox(height: 24),
                                 Center(
                                   child: Material(
@@ -1344,7 +1352,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       onTap: () {
                                         HapticFeedback.lightImpact();
                                         setState(() {
-                                          _showAllClips = true;
+                                          _showAllReplays = true;
                                         });
                                       },
                                       borderRadius: BorderRadius.circular(16),
@@ -1386,7 +1394,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                             ),
                                             const SizedBox(width: 10),
                                             Text(
-                                              '더보기 (${_hotClips.length - 6}개 더)',
+                                              '더보기 (${_replays.length - 6}개 더)',
                                               style: theme.textTheme.bodyLarge
                                                   ?.copyWith(
                                                 color: AppTheme.sakuraPink,
@@ -1478,18 +1486,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  Widget _buildHotClipGridCard(
-      BuildContext context, HotClip clip, bool isDark) {
-    final hasThumbnail = clip.thumbnailUrl.isNotEmpty;
+  Widget _buildReplayGridCard(
+      BuildContext context, Replay replay, bool isDark) {
+    final hasThumbnail = replay.thumbnailUrl.isNotEmpty;
 
     return GestureDetector(
       onTap: () async {
         HapticFeedback.lightImpact();
-        final url = Uri.parse(clip.videoUrl);
+        final url = Uri.parse(replay.videoUrl);
         if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('영상을 열 수 없습니다: ${clip.videoUrl}')),
+              SnackBar(content: Text('영상을 열 수 없습니다: ${replay.videoUrl}')),
             );
           }
         }
@@ -1522,7 +1530,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   children: [
                     hasThumbnail
                         ? Image.network(
-                            clip.thumbnailUrl,
+                            replay.thumbnailUrl,
                             width: double.infinity,
                             height: double.infinity,
                             fit: BoxFit.cover,
@@ -1621,7 +1629,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      clip.title,
+                      replay.title,
                       style: TextStyle(
                         color: isDark ? Colors.white : AppTheme.deepIce,
                         fontWeight: FontWeight.w700,
@@ -1643,7 +1651,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${_formatViewCount(clip.viewCount)}회',
+                          '${_formatViewCount(replay.viewCount)}회',
                           style: TextStyle(
                             color: isDark
                                 ? Colors.white.withValues(alpha: 0.6)
@@ -1655,239 +1663,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ],
                     ),
                   ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHotClipCard(BuildContext context, HotClip clip, bool isDark) {
-    // 썸네일이 없거나 빈 문자열인 경우 체크
-    final hasThumbnail = clip.thumbnailUrl.isNotEmpty;
-
-    return GestureDetector(
-      onTap: () async {
-        HapticFeedback.lightImpact();
-        final url = Uri.parse(clip.videoUrl);
-        if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('영상을 열 수 없습니다: ${clip.videoUrl}')),
-            );
-          }
-        }
-      },
-      child: Container(
-        width: 280,
-        margin: const EdgeInsets.only(right: 12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.12)
-                : Colors.black.withValues(alpha: 0.08),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.sakuraPink.withValues(alpha: 0.15),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Stack(
-            children: [
-              // 썸네일 또는 플레이스홀더
-              hasThumbnail
-                  ? Image.network(
-                      clip.thumbnailUrl,
-                      width: 280,
-                      height: 180,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          width: 280,
-                          height: 180,
-                          color: isDark
-                              ? AppTheme.winterDark.withValues(alpha: 0.5)
-                              : Colors.grey.withValues(alpha: 0.2),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
-                              color: AppTheme.sakuraPink,
-                              strokeWidth: 2,
-                            ),
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 280,
-                          height: 180,
-                          color: isDark
-                              ? AppTheme.winterDark.withValues(alpha: 0.5)
-                              : Colors.grey.withValues(alpha: 0.2),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.error_outline_rounded,
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.5)
-                                    : AppTheme.textSecondary,
-                                size: 32,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '이미지 로드 실패',
-                                style: TextStyle(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.7)
-                                      : AppTheme.textSecondary,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    )
-                  : Container(
-                      width: 280,
-                      height: 180,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            isDark
-                                ? AppTheme.winterDark.withValues(alpha: 0.8)
-                                : AppTheme.iceBlue.withValues(alpha: 0.3),
-                            isDark
-                                ? AppTheme.deepIce.withValues(alpha: 0.3)
-                                : AppTheme.sakuraPink.withValues(alpha: 0.2),
-                          ],
-                        ),
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.video_library_rounded,
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.6)
-                                  : AppTheme.glacierBlue,
-                              size: 48,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              '영상',
-                              style: TextStyle(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.8)
-                                    : AppTheme.deepIce,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-              // 그라디언트 오버레이
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  height: 100,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.8),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              // 재생 아이콘
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.play_arrow_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-              // 텍스트 정보
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        clip.title,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          letterSpacing: -0.2,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.visibility_rounded,
-                            color: Colors.white.withValues(alpha: 0.8),
-                            size: 14,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${_formatViewCount(clip.viewCount)}회',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ],
