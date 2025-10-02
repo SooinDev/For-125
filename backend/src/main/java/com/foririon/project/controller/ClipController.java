@@ -1,7 +1,7 @@
 package com.foririon.project.controller;
 
 import com.foririon.project.service.ClipService;
-import com.foririon.project.vo.HotClipVO;
+import com.foririon.project.vo.ReplayVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,7 +17,7 @@ public class ClipController {
   private ClipService clipService;
 
   @GetMapping("/hot-clips") // 세부 경로를 메소드 레벨에 지정
-  public List<HotClipVO> getHotClips() {
-    return clipService.getHotClips();
+  public List<ReplayVO> getReplays() {
+    return clipService.getReplays();
   }
 }
