@@ -2,6 +2,7 @@ package com.foririon.project.service.impl;
 
 import com.foririon.project.mapper.StreamMapper;
 import com.foririon.project.service.StreamService;
+import com.foririon.project.service.FCMService;
 import com.foririon.project.vo.ChzzkApiResponseVO;
 import com.foririon.project.vo.LiveStatusContentVO;
 import com.foririon.project.vo.StreamVO;
@@ -24,8 +25,13 @@ public class StreamServiceImpl implements StreamService {
   @Autowired
   private RestTemplate restTemplate;
 
+  @Autowired
+  private FCMService fcmService;
+
   @Value("${chzzk.channel.id}")
   private String channelId;
+
+  private String lastLiveStatus = "CLOSE"; // 이전 방송 상태 저장
 
   @Override
   public LiveStatusContentVO getLiveStatus() {
@@ -44,6 +50,21 @@ public class StreamServiceImpl implements StreamService {
 
       if (content != null) {
         content.setChannelId(channelId);
+
+        // 방송 상태 변경 감지 및 알림 전송
+        String currentStatus = content.getStatus();
+        if (!currentStatus.equals(lastLiveStatus)) {
+          if ("OPEN".equals(currentStatus)) {
+            // 방송 시작 알림
+            System.out.println("[FCM] 방송 시작 감지 - 알림 전송");
+            fcmService.sendToTopic("live_start", "이리온 방송 시작!", "지금 방송 중입니다 ❄️🌸", "live_start");
+          } else if ("CLOSE".equals(currentStatus) && "OPEN".equals(lastLiveStatus)) {
+            // 방송 종료 알림
+            System.out.println("[FCM] 방송 종료 감지 - 알림 전송");
+            fcmService.sendToTopic("live_end", "방송이 종료되었습니다", "오늘도 함께해주셔서 감사합니다! 💙", "live_end");
+          }
+          lastLiveStatus = currentStatus;
+        }
 
         // 2. OPEN 상태일 때만 썸네일 조회
         if ("OPEN".equals(content.getStatus())) {

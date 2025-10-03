@@ -31,6 +31,12 @@ secrets.properties
 api-keys.properties
 credentials.json
 
+# Firebase 서비스 계정 키
+firebase-service-account.json
+for-irion-firebase-adminsdk-*.json
+src/main/resources/firebase-service-account.json
+src/main/resources/for-irion-firebase-adminsdk-*.json
+
 # OAuth 및 토큰
 **/oauth2/
 **/tokens/

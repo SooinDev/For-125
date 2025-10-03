@@ -20,11 +20,17 @@ migrate_working_dir/
 *.p12
 *.jks
 *.keystore
-google-services.json
-GoogleService-Info.plist
-firebase_options.dart
-secrets.dart
-api_keys.dart
+
+# Firebase 설정 파일 (민감 정보 포함)
+**/google-services.json
+**/GoogleService-Info.plist
+# firebase_options.dart는 커밋해도 됨 (공개 키만 포함)
+
+# 로컬 설정 파일
+**/local_config.dart
+lib/config/local_config.dart
+**/secrets.dart
+**/api_keys.dart
 config.properties
 
 # IntelliJ related

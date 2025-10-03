@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:ui';
 import 'dart:math' as math;
 import 'dart:async';
+import 'package:provider/provider.dart';
 import 'schedule_page.dart';
 import 'main_wrapper.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -14,6 +15,9 @@ import 'config/app_config.dart';
 import 'theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'widgets/premium_app_bar.dart';
+import 'providers/theme_provider.dart';
+import 'providers/notification_provider.dart';
+import 'services/fcm_service.dart';
 
 // 다시보기 모델
 class Replay {
@@ -69,6 +73,10 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await initializeDateFormatting('ko_KR');
+
+  // FCM 초기화
+  await FCMService().initialize();
+
   runApp(const MyApp());
 }
 
@@ -77,12 +85,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'For Irion',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      home: const MainWrapper(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
+      ],
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
+          return MaterialApp(
+            title: 'For Irion',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.themeMode,
+            home: const MainWrapper(),
+          );
+        },
+      ),
     );
   }
 }

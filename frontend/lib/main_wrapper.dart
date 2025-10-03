@@ -4,6 +4,7 @@ import 'main.dart';
 import 'pages/info_page.dart';
 import 'pages/links_page.dart';
 import 'pages/developer_page.dart';
+import 'pages/settings_page.dart';
 import 'theme/app_theme.dart';
 
 class MainWrapper extends StatefulWidget {
@@ -21,6 +22,7 @@ class _MainWrapperState extends State<MainWrapper> {
     const InfoPage(),
     LinksPage(),
     const DeveloperPage(),
+    const SettingsPage(),
   ];
 
   @override
@@ -63,11 +65,11 @@ class _MainWrapperState extends State<MainWrapper> {
                 : Colors.black.withValues(alpha: 0.5),
             selectedLabelStyle: const TextStyle(
               fontWeight: FontWeight.w700,
-              fontSize: 12,
+              fontSize: 11,
             ),
             unselectedLabelStyle: const TextStyle(
               fontWeight: FontWeight.w500,
-              fontSize: 11,
+              fontSize: 10,
             ),
             elevation: 0,
             items: const [
@@ -90,6 +92,11 @@ class _MainWrapperState extends State<MainWrapper> {
                 icon: Icon(Icons.code_rounded),
                 activeIcon: Icon(Icons.code_rounded),
                 label: '개발자',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.settings_rounded),
+                activeIcon: Icon(Icons.settings_rounded),
+                label: '설정',
               ),
             ],
           ),
