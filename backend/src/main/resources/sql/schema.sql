@@ -27,9 +27,3 @@ CREATE TABLE stream_schedules (
                                   is_cancelled BOOLEAN DEFAULT FALSE COMMENT '방송 취소 여부',
                                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) COMMENT '방송 일정';
-
-CREATE TABLE notifications (
-                               id INT AUTO_INCREMENT PRIMARY KEY,
-                               fcm_token VARCHAR(255) NOT NULL UNIQUE,
-                               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
